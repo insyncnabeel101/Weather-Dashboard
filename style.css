@@ -1,0 +1,409 @@
+/* ==========================================================================
+   Weatherline — design tokens
+   Palette: deep night-sky navy + brass-instrument amber, shifting per
+   condition. Display face for the headline reading, grotesk for UI,
+   monospace for instrument-style data readouts.
+   ========================================================================== */
+
+:root {
+  --ink: #F2EFE6;
+  --ink-muted: #93A6BA;
+  --ink-faint: #5E7488;
+
+  --panel-bg: rgba(18, 32, 51, 0.66);
+  --panel-border: rgba(232, 163, 61, 0.16);
+  --panel-shadow: rgba(4, 8, 14, 0.45);
+
+  --amber: #E8A33D;
+  --amber-soft: rgba(232, 163, 61, 0.16);
+  --danger: #E2715B;
+
+  --sky-a: #122033;
+  --sky-b: #2C4A66;
+  --orb-color: rgba(232, 163, 61, 0.55);
+
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+}
+
+/* Condition + daytime variants — recolor the sky and accent only */
+body[data-daytime="night"] {
+  --sky-a: #070C16;
+  --sky-b: #16273B;
+  --orb-color: rgba(217, 224, 240, 0.35);
+}
+body[data-weather="clear"][data-daytime="day"]    { --sky-a: #1B3A52; --sky-b: #4488B0; --orb-color: rgba(247, 191, 99, 0.7); }
+body[data-weather="clear"][data-daytime="night"]  { --sky-a: #060B14; --sky-b: #142136; --orb-color: rgba(220, 226, 240, 0.45); }
+body[data-weather="cloudy"]                       { --sky-a: #232F3E; --sky-b: #3F5167; --orb-color: rgba(220, 226, 232, 0.25); }
+body[data-weather="fog"]                          { --sky-a: #2A2F36; --sky-b: #454C55; --orb-color: rgba(220, 226, 232, 0.18); }
+body[data-weather="rain"]                         { --sky-a: #16222C; --sky-b: #28404F; --orb-color: rgba(127, 183, 201, 0.4); --amber: #8FC4D6; }
+body[data-weather="snow"]                         { --sky-a: #28323D; --sky-b: #4D5F70; --orb-color: rgba(230, 238, 242, 0.5); --amber: #D7E5EC; }
+body[data-weather="storm"]                        { --sky-a: #0E1118; --sky-b: #242838; --orb-color: rgba(232, 163, 61, 0.35); }
+
+/* ==========================================================================
+   Reset + base
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: #0E1B2C;
+  overflow-x: hidden;
+  transition: background 0.8s ease;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input {
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   Ambient sky background
+   ========================================================================== */
+
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60% 50% at 78% 18%, var(--orb-color), transparent 60%),
+    linear-gradient(165deg, var(--sky-a), var(--sky-b) 100%);
+  transition: background 1s ease;
+}
+
+.sky__orb {
+  position: absolute;
+  top: 14%;
+  right: 16%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--orb-color);
+  filter: blur(2px);
+  opacity: 0.8;
+  animation: drift 18s ease-in-out infinite;
+}
+
+.sky__cloud {
+  position: absolute;
+  width: 280px;
+  height: 90px;
+  background: radial-gradient(closest-side, rgba(255,255,255,0.06), transparent 70%);
+  border-radius: 50%;
+  filter: blur(6px);
+}
+.sky__cloud--a { top: 30%; left: -5%; animation: driftSlow 40s linear infinite; }
+.sky__cloud--b { top: 60%; right: -10%; width: 360px; animation: driftSlow 55s linear infinite reverse; }
+
+@keyframes drift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(14px); }
+}
+@keyframes driftSlow {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(60px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky__orb, .sky__cloud { animation: none; }
+}
+
+/* ==========================================================================
+   Panel
+   ========================================================================== */
+
+.panel {
+  width: 100%;
+  max-width: 420px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px var(--panel-shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding: 28px 26px 22px;
+}
+
+.panel__header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 28px;
+  letter-spacing: 0.01em;
+}
+
+/* ==========================================================================
+   Search
+   ========================================================================== */
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(8, 14, 22, 0.4);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  padding: 6px 6px 6px 14px;
+  margin-bottom: 16px;
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink);
+  font-size: 14.5px;
+  padding: 8px 0;
+}
+.search input::placeholder { color: var(--ink-faint); }
+
+.btn {
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn--icon {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+
+.btn--icon:hover { background: var(--amber-soft); color: var(--amber); }
+.btn:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Status / empty states
+   ========================================================================== */
+
+.status {
+  min-height: 18px;
+  margin: 0 0 4px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--ink-muted);
+}
+.status.is-error { color: var(--danger); }
+
+.empty {
+  text-align: center;
+  color: var(--ink-muted);
+  padding: 30px 10px 18px;
+}
+.empty svg { color: var(--amber); margin-bottom: 12px; }
+.empty p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 26ch;
+  margin-inline: auto;
+}
+
+/* ==========================================================================
+   Reading
+   ========================================================================== */
+
+.reading {
+  text-align: center;
+  padding: 6px 0 8px;
+}
+
+.reading__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 4px;
+  color: var(--amber);
+}
+.reading__icon svg { width: 100%; height: 100%; }
+
+.reading__temp-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+}
+
+.reading__temp {
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.unit-toggle {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.unit-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 3px 8px;
+}
+.unit-btn.is-active { background: var(--amber-soft); color: var(--amber); }
+.unit-btn:focus-visible { outline: 2px solid var(--amber); outline-offset: -2px; }
+
+.reading__condition {
+  margin: 6px 0 2px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.reading__place {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 13.5px;
+}
+
+.reading__meta {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+/* ==========================================================================
+   Instrument readout grid
+   ========================================================================== */
+
+.stats {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat {
+  position: relative;
+  background: rgba(8, 14, 22, 0.38);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  padding: 10px 6px;
+  text-align: center;
+}
+
+.stat__label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+}
+
+.stat__value {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.stat--wind { padding-right: 22px; }
+.stat__compass {
+  position: absolute;
+  top: 9px;
+  right: 8px;
+  color: var(--amber);
+  transition: transform 0.4s ease;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.panel__footer {
+  margin-top: 20px;
+  text-align: center;
+}
+.panel__footer p {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+}
+
+/* ==========================================================================
+   Loading state
+   ========================================================================== */
+
+.is-loading .reading,
+.is-loading .stats {
+  opacity: 0.45;
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 380px) {
+  .reading__temp { font-size: 52px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
